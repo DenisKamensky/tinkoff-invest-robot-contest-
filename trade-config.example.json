@@ -1,0 +1,36 @@
+[
+    {
+        "id": "0",
+        "APIs": {
+            "BINANCE": {
+                "key": "INSERT BINANCE_APIKEY",
+                "secret": "INSERT BINANCE_SECRET",
+                "baseUrl": "https://api.binance.com/api/v3/"
+            },
+            "ALPACA": {
+                "key": "INSERT ALPACA_APIKEY",
+                "secret": "INSERT ALPACA_SECRET",
+                "baseUrl": "https://paper-api.alpaca.markets/v1/"
+            },
+            "TINKOFF": {
+                "key": "INSERT TINKOFF API Key",
+                "isSandBox": "set true to trade in sandbox mode and false to use real stockmarket",
+                "account_id": "INSERT TINKOFF account id"
+            }
+        },
+        "pairs": [
+            {
+                "take": "RUB",
+                "make": "MGNT",
+                "makeType": "Shares",
+                "apiName": "TINKOFF",
+                "minLotQuantity": 1,
+                "candlesConfig": {
+                    "interval": "1m",
+                    "limit": 20
+                }
+            }
+        ]
+    }
+]
+

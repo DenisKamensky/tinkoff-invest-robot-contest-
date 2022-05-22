@@ -1,0 +1,12 @@
+image: node:latest # (1)
+
+# This folder is cached between builds
+cache:
+  paths:
+    - node_modules/ # (2)
+
+test:
+  script:
+    - npm install # (3)
+    - npm test
+

@@ -1,0 +1,48 @@
+{
+  "name": "trade",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rm -rf dist && tsc && npm run copy:protofiles",
+    "start": "node dist/index.js",
+    "backtest": "npm run build && node dist/backtest.js",
+    "test": "nyc mocha",
+    "prestart": "npm run build",
+    "editorconfig": "editorconfig-checker",
+    "prepare": "husky install",
+    "copy:protofiles": "copyfiles -f src/utils/tinkoff-legacy-sdk/protos/*.proto dist/utils/tinkoff-legacy-sdk/protos/"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.6.7",
+    "data-forge": "^1.9.5",
+    "dotenv": "8.2.0",
+    "fast-copy": "^2.1.3",
+    "grademark": "^0.2.9",
+    "grpc-promise": "^1.4.0",
+    "mathjs": "9.4.1",
+    "mocha": "^9.1.2",
+    "node-cache": "^5.1.2",
+    "node-fetch": "2.6.1",
+    "underscore": "1.12.1",
+    "winston": "3.3.3"
+  },
+  "devDependencies": {
+    "@types/mocha": "^9.0.0",
+    "@types/node": "14.0.4",
+    "chai": "^4.3.4",
+    "copyfiles": "^2.4.1",
+    "editorconfig-checker": "^4.0.2",
+    "husky": "^7.0.2",
+    "install": "^0.13.0",
+    "nyc": "^15.1.0",
+    "sinon": "^11.1.2",
+    "ts-node-dev": "1.1.8",
+    "tsc": "^2.0.3",
+    "tslint": "5.12.1",
+    "typescript": "^3.9.10"
+  }
+}

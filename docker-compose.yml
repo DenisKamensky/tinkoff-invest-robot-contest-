@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  trader:
+    build: .
+    container_name: trader
+    restart: always
+    env_file:
+      - .env
