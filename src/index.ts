@@ -99,4 +99,4 @@ setInterval(() => {
       machine.dispatch("exec", pair, api, user.id);
     });
   });
-}, convertTime(1, TRANSFORM_MEASURES.HOURS, TRANSFORM_MEASURES.MILLISECONDS));
+}, convertTime(1, TRANSFORM_MEASURES.MINUTES, TRANSFORM_MEASURES.MILLISECONDS));
