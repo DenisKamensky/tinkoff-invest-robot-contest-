@@ -14,7 +14,7 @@ interface IPair {
   quantityFormater?: string;
   minLotQuantity?: number; // how many min lots to trade
   // tslint:disable-next-line:max-line-length
-  corridorOffsetPersent?: number; // allows to tune sensetivity of std edges intersection, calue in percents from total coridor height
+  offset?: number; // allows to tune sensetivity of std edges intersection, calue in percents from total coridor height
 }
 
 export default IPair;

@@ -163,7 +163,7 @@ class Binance extends TradeAPI {
 
   protected createAuthHeader(): {[key: string]: string} {
     return {
-      "X-MBX-APIKEY": this.config.apiKey,
+      "X-MBX-APIKEY": this.config.key,
     };
   }
 
@@ -199,7 +199,7 @@ class Binance extends TradeAPI {
   private signParams(requestUrl: URL): void {
     requestUrl.searchParams.append(
       "signature",
-      createHmac( "sha256", this.config.secretKey ).update(requestUrl.searchParams.toString()).digest("hex"),
+      createHmac("sha256", this.config.secret).update(requestUrl.searchParams.toString()).digest("hex"),
     );
   }
 
@@ -241,11 +241,11 @@ class Binance extends TradeAPI {
   }
 
   private post(url: string, body?: any) {
-    this.fetch({url, body, customParams: {method: "post"}});
+    return this.fetch({url, body, customParams: {method: "post"}});
   }
 
   private delete(url: string, body?: any) {
-    this.fetch({url, body, customParams: {method: "delete"}});
+    return this.fetch({url, body, customParams: {method: "delete"}});
   }
 
   private placeOrder({

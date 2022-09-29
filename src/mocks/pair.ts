@@ -7,7 +7,7 @@ const pair: IPair =  {
     interval: "15",
     limit: 20,
   },
-  corridorOffsetPersent: 10,
+  offset: 10,
   make: "RUB",
   minLotQuantity: 2,
   quantityFormater: "(val) => val * 2",

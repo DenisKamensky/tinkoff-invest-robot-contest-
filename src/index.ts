@@ -17,7 +17,7 @@ import StateMachine from "./utils/stateMachine";
 
 dotenv.config();
 
-import trendDrivenStrategy from "./strategies/bollindgerBands";
+import trendDrivenStrategy from "./strategies/DCA";
 
 const logger = winston.createLogger({
   defaultMeta: {},
@@ -99,4 +99,4 @@ setInterval(() => {
       machine.dispatch("exec", pair, api, user.id);
     });
   });
-}, convertTime(15, TRANSFORM_MEASURES.SECONDS, TRANSFORM_MEASURES.MILLISECONDS));
+}, convertTime(1, TRANSFORM_MEASURES.HOURS, TRANSFORM_MEASURES.MILLISECONDS));

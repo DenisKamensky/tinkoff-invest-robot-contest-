@@ -99,7 +99,7 @@ const stateMachine: ITransition = {
       /*
         add smoothing coofitient to react on candles that is close to bands
       */
-      const CORRIDOR_OFFSET_PERCENT = pair.corridorOffsetPersent || 5;
+      const CORRIDOR_OFFSET_PERCENT = pair.offset || 5;
       const beforePrevCandleOffest = (beforePevCorridor.corridorWidth / 100) * CORRIDOR_OFFSET_PERCENT;
       const {
         openningPrice: beforePrevOpenningPrice,

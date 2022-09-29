@@ -380,3 +380,4 @@ tags
 # Создано https://www.toptal.com/developers/gitignore/api/node,vscode,vim,macos # Отредактируйте на https://www.toptal.com/developers/gitignore?templates=node,vscode,vim,macos ### macOS ### # Общий .DS_Store .AppleDouble .LSOverride # Значок должен заканчиваться двумя \ r Икона # Миниатюры ._ * # Файлы, которые могут появиться в корне тома .DocumentRevisions-V100 .fseventsd .Spotlight-V100 .TemporaryItems . Мусор .VolumeIcon.icns .com.apple.timemachine.donotpresent # Каталоги, потенциально созданные на удаленном ресурсе AFP .AppleDB .AppleDesktop
 
 trade-config.json
+orders.json
