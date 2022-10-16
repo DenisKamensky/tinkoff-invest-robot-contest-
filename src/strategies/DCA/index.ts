@@ -25,12 +25,6 @@ const stateMachine: ITransition = {
         async readCachedOrders(pair, api, userId) {
             const orders = await db.getOrders(pair, userId);
             
-            if (!orders.length) {
-                this.changeState("trade");
-                this.dispatch("buy", pair, api, userId);
-                return;
-            }
-
             const candles = await api.getCandleStick(pair);
 
             if (!candles.length) {
@@ -47,19 +41,18 @@ const stateMachine: ITransition = {
             const currentPrice = lastCandle.closingPrice;
             if (!lastCandle) {
                 return;
-            }
-            if (!orders.length) {
-                this.changeState("trade");
-                this.dispatch("buy", pair, api, userId, currentPrice);
-                return;
-            }
-            
+            } 
 
             const parsedTime = parseTimeFromConfig(pair.candlesConfig.interval);
             const timeGap = convertTime(parsedTime.numericValue, parsedTime.timeUnit, TRANSFORM_MEASURES.MILLISECONDS);
             const lastOrderTime = await db.getLastOrderTime(pair, userId);
             const hasFreshOrder = (Date.now() - timeGap) < lastOrderTime;
             if (hasFreshOrder) {
+                return;
+            }
+            if (!orders.length) {
+                this.changeState("trade");
+                this.dispatch("buy", pair, api, userId, currentPrice);
                 return;
             }
             const closestCheapOrder = orders.find(order => {
@@ -94,7 +87,7 @@ const stateMachine: ITransition = {
                     });
                     return;
                 }
-                const transformQuantity = getConfigQuantityFormaters(pair);
+                const transformQuantity = getConfigQuantityFormaters(pair)
                 const order = await api.buy(pair, transformQuantity(tradeLimit / price), price);
                 const balance = await api.getPairBalance(pair);
                 if (!Number(order?.price)) {
