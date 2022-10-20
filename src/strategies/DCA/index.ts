@@ -55,6 +55,7 @@ const stateMachine: ITransition = {
                 this.dispatch("buy", pair, api, userId, currentPrice);
                 return;
             }
+            
             const closestCheapOrder = orders.find(order => {
                 const price = Number(order.price);
                 if (!isNaN(price)) {
@@ -67,7 +68,7 @@ const stateMachine: ITransition = {
             } else {
                 const cheapestOrder = orders[orders.length - 1];
                 const cheapestOrderPrice = Number(cheapestOrder.price);
-                if (!isNaN(cheapestOrderPrice) && cheapestOrderPrice > currentPrice) {
+                if (!isNaN(cheapestOrderPrice) && cheapestOrderPrice - (pair.offset || 0) > currentPrice) {
                     this.dispatch("buy", pair, api, userId, currentPrice);
                 }
             }
