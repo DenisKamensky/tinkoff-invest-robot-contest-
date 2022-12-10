@@ -7,7 +7,7 @@ const protoLoader = require('@grpc/proto-loader');
 const fs  = require('fs');
 
 export default function (opt){
-  if (opt === undefined){
+  if (!opt){
     throw 'Не переданы настройки';
   }
   this.token = opt.token;

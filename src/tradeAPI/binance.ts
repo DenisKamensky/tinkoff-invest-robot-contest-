@@ -1,6 +1,7 @@
 import {createHmac} from "crypto";
 
 import ICandle from "../entities/candle";
+import IOrder from "../entities/order";
 import IPair from "../entities/pair";
 import TRADE_DIRECTIONS from "../entities/tradeDirections";
 
@@ -247,7 +248,11 @@ class Binance extends TradeAPI {
   private delete(url: string, body?: any) {
     return this.fetch({url, body, customParams: {method: "delete"}});
   }
-
+  private transformToOrder(rawOrder): IOrder {
+    rawOrder.time = rawOrder.transactTime;
+    rawOrder.id = rawOrder.orderId;
+    return rawOrder;
+  }
   private placeOrder({
     symbol,
     side,
@@ -268,7 +273,7 @@ class Binance extends TradeAPI {
           // timeInForce: type === Binance.ORDER_TYPES.MARKET ? undefined : timeInForce,
           type,
         }),
-    );
+    ).then(order => this.transformToOrder(order));
   }
 }
 

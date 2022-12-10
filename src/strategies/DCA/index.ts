@@ -24,7 +24,6 @@ const stateMachine: ITransition = {
         },
         async readCachedOrders(pair, api, userId) {
             const orders = await db.getOrders(pair, userId);
-            
             const candles = await api.getCandleStick(pair);
 
             if (!candles.length) {
@@ -113,7 +112,7 @@ const stateMachine: ITransition = {
         async sell(pair: IPair, api: TradeAPI, userId: IUserId, order: IOrder, price: number) {
             try {
                 const transformQuantity = getConfigQuantityFormaters(pair);
-                const orderQuantity = transformQuantity(Number(order.origQty));
+                const orderQuantity = transformQuantity(Number(order.quantity || order.origQty));
                 const sellOrder = await api.sell(pair, orderQuantity, price);
                 const balance = await api.getPairBalance(pair);
                 loggerLog({
@@ -123,8 +122,8 @@ const stateMachine: ITransition = {
                     order: sellOrder,
                     api: pair.apiName,
                   });
-
-                db.deleteOrder(String(order.orderId));
+                //@TODO: fix after all date will be created according to the common interface
+                db.deleteOrder(String(order.id || order.orderId));
             } catch(error) {
                 loggerLog({
                     level: "error",

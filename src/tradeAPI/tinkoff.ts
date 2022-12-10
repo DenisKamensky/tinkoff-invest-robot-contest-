@@ -249,8 +249,8 @@ class TinkoffApi extends TradeAPI {
 
   public setConfig(config: IConfig) {
     this.config = config;
-    this._api = tinkoffLegacyApi({
-      token: this.config.key,
+    this._api = tinkoffLegacyApi.call(tinkoffLegacyApi, {
+      token: config.key,
       appName: 'DenisKamesnky',
     });
   }
