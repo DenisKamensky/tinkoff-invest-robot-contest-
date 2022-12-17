@@ -1,5 +1,5 @@
 
-import connectToDbPromise from '../../db/mongodb';
+import connectToDbPromise, {STATUS as DB_STATUS, getdbStatus} from '../../db/mongodb';
 import IOrder from '../../entities/order';
 import {IUserId} from "../../entities/user";
 import {IOrderRepositrory} from './';
@@ -20,9 +20,12 @@ class MongoDbRepository implements IOrderRepositrory {
     }
 
     private connectToDb() {
-        return connectToDbPromise;
+        return  getdbStatus() === DB_STATUS.connected
+            ? Promise.resolve()
+            : connectToDbPromise;
     }
     async updateLastTrade(pair: string, userId: string, time: number){
+        await this.connectToDb();
         const lastTrade = await this._lastTradeModel.findOne({pair, userId});
         lastTrade
             ? this._lastTradeModel.findByIdAndUpdate(lastTrade._id.toString(), {$set: {time}})
