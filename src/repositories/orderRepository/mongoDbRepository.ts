@@ -23,7 +23,6 @@ class MongoDbRepository implements IOrderRepositrory {
         return connectToDbPromise;
     }
     async updateLastTrade(pair: string, userId: string, time: number){
-        await this.connectToDb();
         const lastTrade = await this._lastTradeModel.findOne({pair, userId});
         lastTrade
             ? this._lastTradeModel.findByIdAndUpdate(lastTrade._id.toString(), {$set: {time}})

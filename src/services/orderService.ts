@@ -36,11 +36,12 @@ class OrderService {
     }
 
     saveOrder(pair: IPair, userId: IUserId, order: IOrder) {
-        return this._orderRepository.saveOrder(this.transformPair(pair), userId, order)
-            .then(() => 
-                this._orderRepository.updateLastTrade(
-                    this.transformPair(pair), userId, Date.now()
-                ));
+        return Promise.all([
+            this._orderRepository.saveOrder(this.transformPair(pair), userId, order),
+            this._orderRepository.updateLastTrade(
+                this.transformPair(pair), userId, Date.now()
+            )
+        ]);
     }
 
     deleteOrder(id: IOrder['id']) {
