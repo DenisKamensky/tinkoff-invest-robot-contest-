@@ -1,5 +1,6 @@
 
-import connectToDbPromise, {STATUS as DB_STATUS, getdbStatus} from '../../db/mongodb';
+import connectToDbPromise, {getdbStatus} from '../../db/mongodb';
+import mongoose, {ConnectionStates} from 'mongoose';
 import IOrder from '../../entities/order';
 import {IUserId} from "../../entities/user";
 import {IOrderRepositrory} from './';
@@ -20,7 +21,7 @@ class MongoDbRepository implements IOrderRepositrory {
     }
 
     private connectToDb() {
-        return  getdbStatus() === DB_STATUS.connected
+        return  getdbStatus() === ConnectionStates.connected
             ? Promise.resolve()
             : connectToDbPromise;
     }
