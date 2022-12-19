@@ -4,21 +4,17 @@ import mongoose, {ConnectionStates} from 'mongoose';
 import IOrder from '../../entities/order';
 import {IUserId} from "../../entities/user";
 import {IOrderRepositrory} from './';
+import OrderModel from '../../db/mongodb/models/order';
+import LastTadeModel from '../../db/mongodb/models/lastOrderTime';
 
 const mapOrder = mongoOrder => {
     mongoOrder.id = mongoOrder._id.toString();
     return mongoOrder;
 }
 
-
-
 class MongoDbRepository implements IOrderRepositrory {
-    private readonly _orderModel: any;
-    private readonly _lastTradeModel: any; 
-    constructor(orderModel, lastTradeModel) {
-        this._orderModel = orderModel;
-        this._lastTradeModel = lastTradeModel;
-    }
+    private readonly _orderModel = OrderModel;
+    private readonly _lastTradeModel = LastTadeModel;
 
     private connectToDb() {
         return  getdbStatus() === ConnectionStates.connected
@@ -28,9 +24,12 @@ class MongoDbRepository implements IOrderRepositrory {
     async updateLastTrade(pair: string, userId: string, time: number){
         await this.connectToDb();
         const lastTrade = await this._lastTradeModel.findOne({pair, userId});
-        lastTrade
-            ? this._lastTradeModel.findByIdAndUpdate(lastTrade._id.toString(), {$set: {time}})
-            : this._lastTradeModel.create({pair, userId, time})
+        if (!lastTrade) {
+            return this._lastTradeModel.create({pair, userId, time})
+        } else {
+            lastTrade.time = time;
+            return lastTrade.save();
+        }
     };
 
     async getLastOrderTime(pair: string, userId: IUserId) {
