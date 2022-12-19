@@ -39,7 +39,7 @@ class OrderService {
         return Promise.all([
             this._orderRepository.saveOrder(this.transformPair(pair), userId, order),
             this._orderRepository.updateLastTrade(
-                this.transformPair(pair), userId, Date.now()
+                this.transformPair(pair), userId, Number(order.time)
             )
         ]);
     }

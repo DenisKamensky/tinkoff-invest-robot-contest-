@@ -31,10 +31,7 @@ class DataBase {
     }
 }
 
-const orderRepository = new MongoDbRepository(
-    OrderModel,
-    LastTadeModel,
-);
+const orderRepository = new MongoDbRepository();
 //@ts-ignore
 const orderService = new OrderService(orderRepository);
 const db = new DataBase(orderService);
