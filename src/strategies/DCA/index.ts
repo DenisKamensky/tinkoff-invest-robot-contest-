@@ -44,8 +44,9 @@ const stateMachine: ITransition = {
 
             const parsedTime = parseTimeFromConfig(pair.candlesConfig.interval);
             const timeGap = convertTime(parsedTime.numericValue, parsedTime.timeUnit, TRANSFORM_MEASURES.MILLISECONDS);
-            const lastOrderTime = await db.getLastOrderTime(pair, userId);
-            const hasFreshOrder = (Date.now() - timeGap) < lastOrderTime;
+            const validTime = Date.now() - timeGap; 
+            const lastOrderTime = await db.getLastOrderTime(pair, userId).then(time => time || validTime - timeGap);
+            const hasFreshOrder = validTime < lastOrderTime;
             if (hasFreshOrder) {
                 return;
             }

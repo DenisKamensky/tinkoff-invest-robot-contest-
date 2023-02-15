@@ -35,7 +35,7 @@ class MongoDbRepository implements IOrderRepositrory {
     async getLastOrderTime(pair: string, userId: IUserId) {
         await this.connectToDb();
         const lastTrade = await this._lastTradeModel.findOne({pair, userId});
-        return Number(lastTrade.time);
+        return lastTrade ? Number(lastTrade.time) : null;
     }
 
     async getOrders(pair: string, userId: IUserId) {
