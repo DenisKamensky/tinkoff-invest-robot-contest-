@@ -10,16 +10,32 @@ import TradeAPI from "./baseApi";
 type IBananceCandle = string[];
 
 class Binance extends TradeAPI {
-  private LINKS = {
-    ACCOUNT: "account",
-    ALL_ORDERS: "allOrders",
-    CANDLE_STICK: "klines",
-    DEPTH: "depth",
-    EXCHANGE_INFO: "exchangeInfo",
-    OPEN_ORDERS: "openOrders",
-    ORDER: "order",
-    TICKER_PRICE: "ticker/price",
-  };
+  public get SUPPORT_SAVINGS() {return true;}
+  private get REDEEM_TYPES() {
+    return {
+      FAST: "FAST",
+      NORMAL: "NORMAL",
+    }
+  }
+  private get LINKS() {
+    const BASE_API_ENDPOINT = "api/v3/";
+    const SAVINGS_API_ENDPOINT = "sapi/v1/lending/daily/";
+    return {
+      ACCOUNT: `${BASE_API_ENDPOINT}account`,
+      ALL_ORDERS: `${BASE_API_ENDPOINT}allOrders`,
+      CANDLE_STICK: `${BASE_API_ENDPOINT}klines`,
+      DEPTH: `${BASE_API_ENDPOINT}depth`,
+      EXCHANGE_INFO: `${BASE_API_ENDPOINT}exchangeInfo`,
+      OPEN_ORDERS: `${BASE_API_ENDPOINT}openOrders`,
+      ORDER: `${BASE_API_ENDPOINT}order`,
+      TICKER_PRICE: `${BASE_API_ENDPOINT}ticker/price`,
+      GET_SAVING_LIST: `${SAVINGS_API_ENDPOINT}product/list`,
+      GET_SAVING_PURHCASE_QUOTA: `${SAVINGS_API_ENDPOINT}userLeftQuota`,
+      GET_SAVING_REDEMPTION_QUOTA: `${SAVINGS_API_ENDPOINT}userRedemptionQuota`,
+      PURCHASE_SAVING: `${SAVINGS_API_ENDPOINT}purchase`,
+      REDEEM_SAVING: `${SAVINGS_API_ENDPOINT}redeem`,
+    };
+  }
 
   // @TODO: create common interface
   static get ORDER_TYPES() {
@@ -143,8 +159,8 @@ class Binance extends TradeAPI {
     const buyBalance = await this.getBalance(pair.take, balances);
 
     return {
-      [pair.make]: sellBalance,
-      [pair.take]: buyBalance,
+      [pair.make]: Number(sellBalance),
+      [pair.take]: Number(buyBalance),
     };
   }
 
@@ -160,6 +176,69 @@ class Binance extends TradeAPI {
     orders.reverse();
 
     return orders.map((order) => ({...order, side: order.side.toLowerCase()}));
+  }
+
+  public async getSavingsList({make}: IPair) {
+    return this.get(
+      this.LINKS.GET_SAVING_LIST,
+      true,
+      {
+        asset: make,
+      }
+    )
+  }
+
+  public async getSavingsPurchaseQuota({make}: IPair, productId?: string) {
+    return this.get(
+      this.LINKS.GET_SAVING_PURHCASE_QUOTA,
+      true,
+      {
+        type: this.REDEEM_TYPES.FAST,
+        productId: productId || `${this.createSavingProductId(make)}`,
+      }
+    )
+  }
+  
+  public async getSavingsRedemprionQuota({make}: IPair, productId?: string) {
+    return this.get(
+      this.LINKS.GET_SAVING_REDEMPTION_QUOTA,
+      true,
+      {
+        asset: make,
+        productId: productId || `${this.createSavingProductId(make)}`,
+      }
+    )
+  }
+
+  public async buySaving({make}: IPair, amount: number, productId?: string) {
+    return this.post(
+      this.createUrl(
+        this.LINKS.PURCHASE_SAVING,
+        true,
+        {
+          productId: productId || this.createSavingProductId(make),
+          amount,
+        },
+    ));
+  }
+
+
+  public async redeemSaving({make}: IPair, amount: number, productId?: string) {
+    return this.post(
+      this.createUrl(
+        this.LINKS.REDEEM_SAVING,
+        true,
+        {
+          productId: productId || this.createSavingProductId(make),
+          type: this.REDEEM_TYPES.FAST,
+          amount,
+        },
+    ));
+  }
+
+  private createSavingProductId(assetName: string) {
+    const POSTFIX = '001';
+    return assetName + POSTFIX;
   }
 
   protected createAuthHeader(): {[key: string]: string} {
@@ -241,7 +320,7 @@ class Binance extends TradeAPI {
     });
   }
 
-  private post(url: string, body?: any) {
+  private post<T>(url: string, body?: T) {
     return this.fetch({url, body, customParams: {method: "post"}});
   }
 
