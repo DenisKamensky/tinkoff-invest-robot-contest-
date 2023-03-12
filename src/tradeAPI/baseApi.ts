@@ -8,6 +8,7 @@ declare var logger;
 
 export type IConfig = {[key: string]: any};
 abstract class TradeAPI {
+  [x: string]: any;
   protected config: IConfig;
 
   public setConfig(config: IConfig) {

@@ -20,7 +20,7 @@ const loggerLog = (params) => {
 const stateMachine: ITransition = {
     init: {
         exec(pair: IPair, api: TradeAPI, userId: IUserId) {
-            this.dispatch("readCachedOrders", pair, api, userId)
+            this.dispatch("readCachedOrders", pair, api, userId);
         },
         async readCachedOrders(pair, api, userId) {
             const orders = await db.getOrders(pair, userId);
@@ -102,6 +102,9 @@ const stateMachine: ITransition = {
                   api: pair.apiName,
                 });
                 db.saveOrder(pair, userId, order);
+                if (api.SUPPORT_SAVINGS) {
+                    api.buySaving(pair, Number(order.quantity));
+                }
             } catch (error) {
                 loggerLog({
                     level: "error",
@@ -114,6 +117,11 @@ const stateMachine: ITransition = {
             try {
                 const transformQuantity = getConfigQuantityFormaters(pair);
                 const orderQuantity = transformQuantity(Number(order.quantity || order.origQty));
+                const initialBalance = await api.getPairBalance(pair);
+                if (initialBalance[pair.make] < orderQuantity) {
+                    if (!api.SUPPORT_SAVINGS) return;
+                    await api.redeemSaving(pair, orderQuantity);
+                };
                 const sellOrder = await api.sell(pair, orderQuantity, price);
                 const balance = await api.getPairBalance(pair);
                 loggerLog({
