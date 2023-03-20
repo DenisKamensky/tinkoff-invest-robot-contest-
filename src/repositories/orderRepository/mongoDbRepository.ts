@@ -49,7 +49,6 @@ class MongoDbRepository implements IOrderRepositrory {
         order._id = order.id;
         order.userId = userId;
         order.pair = pair;
-        order.quantity = Number(order.quantity || order.origQty);
         delete order.id;
         return this._orderModel.create(order).then(() => undefined);
     }
