@@ -330,6 +330,7 @@ class Binance extends TradeAPI {
   private transformToOrder(rawOrder): IOrder {
     rawOrder.time = rawOrder.transactTime;
     rawOrder.id = rawOrder.orderId;
+    rawOrder.quantity = Number(rawOrder.executedQty);
     return rawOrder;
   }
   private placeOrder({
