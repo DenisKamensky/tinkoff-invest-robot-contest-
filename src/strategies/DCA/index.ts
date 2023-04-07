@@ -7,7 +7,6 @@ import TradeAPIs from "../../entities/tradeAPIs";
 import {convertTime, getConfigQuantityFormaters, parseTimeFromConfig, TRANSFORM_MEASURES} from "../../utils";
 import ICandle from "../../entities/candle";
 import IOrder from "../../entities/order";
-  
 
 declare var logger;
 const loggerLog = (params) => {

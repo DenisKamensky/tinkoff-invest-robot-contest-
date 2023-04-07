@@ -8,6 +8,7 @@ import TRADE_DIRECTIONS from "../entities/tradeDirections";
 import Queue from "../utils/dataStructures/queue";
 import {parseTimeFromConfig, delay} from "../utils";
 import TradeAPI, {IConfig} from "./baseApi";
+import { IStrategyNames } from "../entities/strategyNames";
 
 declare var logger;
 
@@ -235,13 +236,15 @@ class TinkoffApi extends TradeAPI {
       : createProductionCtx(this._api)
   }
 
-  public async buy(pair: IPair, calculatedQuantity: number, price: number) {
-    const {figi} = await this.ctx.getInstrument(pair.make, pair.makeType);
-    const quantity = await this.getMinLotSize(pair);
+  public async buy(pair: IPair, calculatedQuantity?: number, price?: number, figi?: string, account_id?: string) {
+    if (!figi) {
+      figi = await this.ctx.getInstrument(pair.make, pair.makeType);
+    }
+    const quantity = calculatedQuantity || await this.getMinLotSize(pair);
     return this.ctx.makeOrder({
       figi,
       quantity,
-      account_id: this.config.account_id,
+      account_id: account_id || this.config.account_id,
       direction: 'ORDER_DIRECTION_BUY',
       order_type: 'ORDER_TYPE_MARKET',
     })
@@ -254,7 +257,7 @@ class TinkoffApi extends TradeAPI {
       appName: 'DenisKamesnky',
     });
   }
-  protected createAuthHeader()  {
+  protected createAuthHeader() {
     return {
       token: this.config.apiKey
     };
@@ -382,12 +385,14 @@ class TinkoffApi extends TradeAPI {
     return resultOrders;
   }
 
-  public async sell(pair, quantity, price) {
-    const {figi} = await this.ctx.getInstrument(pair.make, pair.makeType);
+  public async sell(pair: IPair, quantity: number, price?: number, figi?: string, account_id?: string) {
+    if (!figi) {
+      figi = await this.ctx.getInstrument(pair.make, pair.makeType); 
+    }
     return this.ctx.makeOrder({
       figi,
       quantity,
-      account_id: this.config.account_id,
+      account_id: account_id || this.config.account_id,
       direction: 'ORDER_DIRECTION_SELL',
       order_type: 'ORDER_TYPE_MARKET',
     });
@@ -395,6 +400,23 @@ class TinkoffApi extends TradeAPI {
 
   public getPairBalance(pair: IPair) {
     return this.ctx.getPortfolio(this.config.account_id);
+  }
+
+  public getPortfolio(accountId: string) {
+    const parsePosition = position => {
+      const nkd = parseFloat(position.current_nkd);
+      return {
+        ...position,
+        average_position_price: parseFloat(position.average_position_price),
+        current_price: parseFloat(position.current_price),
+        current_nkd: isNaN(nkd) ? 0 : nkd,
+        average_position_price_fifo: parseFloat(position.average_position_price_fifo),
+      }
+    }
+    return this.ctx.getPortfolio(accountId).then(response => {
+      response.positions = response.positions.map(parsePosition);
+      return response;
+    });
   }
 
   public async getOrderBook(pair: IPair, depth: number) {
@@ -442,6 +464,7 @@ class TinkoffApi extends TradeAPI {
       take: 'RUB',
       make: ticker,
       apiName: TradeAPIs.TINKOFF,
+      strategyName: IStrategyNames.DCA,
     }
     const {interval: candleInterval} = this.calculateCandelIntervalConfig({
       ...defaultParams,

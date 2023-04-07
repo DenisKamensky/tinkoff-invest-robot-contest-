@@ -1,4 +1,6 @@
 import * as dotenv from "dotenv";
+dotenv.config();
+
 import * as fs from "fs";
 import path from "path";
 import {promisify} from "util";
@@ -13,11 +15,11 @@ import AlpacaAPI from "./tradeAPI/alpaca";
 import TradeAPI from "./tradeAPI/baseApi";
 import BinanceApi from "./tradeAPI/binance";
 import TinkoffApi from "./tradeAPI/tinkoff";
-import StateMachine from "./utils/stateMachine";
+import StateMachine, { ITransition } from "./utils/stateMachine";
+import DcaStrategy from "./strategies/DCA";
+import FollowPortfolioStrategy from "./strategies/followPortfolio";
+import { IStrategyNames } from "./entities/strategyNames";
 
-dotenv.config();
-
-import trendDrivenStrategy from "./strategies/DCA";
 
 const logger = winston.createLogger({
   defaultMeta: {},
@@ -55,6 +57,11 @@ const PATH_TO_CONFIG = path.resolve(configFileName);
 const initialConfig = JSON.parse(fs.readFileSync(PATH_TO_CONFIG, "utf-8"));
 let tradeConfig = initialConfig as ITradeConfigItem[];
 
+const strategiesDictionary: Record<IStrategyNames, ITransition> = {
+  [IStrategyNames.DCA]: DcaStrategy,
+  [IStrategyNames.FOLLOW_PORTFOLIO]: FollowPortfolioStrategy,
+};
+
 /*
 * update config on Changes
 */
@@ -65,7 +72,6 @@ fs.watch(path.resolve(), (eventType, filename) => {
   readFile(PATH_TO_CONFIG, "utf-8")
     .then((content) => {
       tradeConfig = JSON.parse(content);
-
     });
 });
 
@@ -95,7 +101,15 @@ setInterval(() => {
         });
         return;
       }
-      const machine = new StateMachine(trendDrivenStrategy, "init");
+      const strategy = strategiesDictionary[pair.strategyName];
+      if (!strategy) {
+        logger.log({
+          level: "error",
+          message: `${pair.strategyName} - strategy not found`,
+        });
+        return;
+      }
+      const machine = new StateMachine(strategy, "init");
       machine.dispatch("exec", pair, api, user.id);
     });
   });
