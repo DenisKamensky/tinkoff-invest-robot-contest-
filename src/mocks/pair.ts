@@ -1,4 +1,5 @@
 import IPair from "../entities/pair";
+import { IStrategyNames } from "../entities/strategyNames";
 import TradeAPIs from "../entities/tradeAPIs";
 
 const pair: IPair =  {
@@ -7,6 +8,7 @@ const pair: IPair =  {
     interval: "15",
     limit: 20,
   },
+  strategyName: IStrategyNames.DCA,
   offset: 10,
   make: "RUB",
   minLotQuantity: 2,

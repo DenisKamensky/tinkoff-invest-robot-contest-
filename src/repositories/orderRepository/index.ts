@@ -1,5 +1,4 @@
 import IOrder from '../../entities/order';
-import IPair from "../../entities/pair";
 import { IUserId } from "../../entities/user";
 
 export interface IOrderRepositrory {
