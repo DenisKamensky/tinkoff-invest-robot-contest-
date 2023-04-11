@@ -68,7 +68,6 @@ const stateMachine: ITransition = {
         }
         
         if (!portfolioSnapshot) {
-          await db.savePortfolio(pair.sourcePortfolioId, portfolio);
           portfolioSnapshot = {id: pair.sourcePortfolioId, positions: []}
         }
 
@@ -81,7 +80,7 @@ const stateMachine: ITransition = {
         }, {});
         let commonPortfolioPrice = 0;
         portfolio.positions.forEach((position: IPosition) => {
-          // save precision for computations 
+          // save precision for computations
           commonPortfolioPrice = math.chain(position.current_price)
             .multiply(position.quantity)
             .add(commonPortfolioPrice)
@@ -97,12 +96,12 @@ const stateMachine: ITransition = {
 
           if (cachedPositon.quantity === position.quantity) {
             delete changedPositions[position.figi];
-          } 
+          }
         });
-
         if (!Object.keys(changedPositions).length) {
           return;
         }
+        await db.savePortfolio(pair.sourcePortfolioId, portfolio);
         this.dispatch("calculatePortfolioProportions", pair, api, userId, {portfolio, totalPortfolioPrice: commonPortfolioPrice})
       },
     
@@ -150,10 +149,10 @@ const stateMachine: ITransition = {
           const moneyFromPercent = math.chain(percent).multiply(portfolioPrice).done();
           const itemsInLot = math.chain(quantity).divide(quantity_lots).done();
           const priceForLot = math.chain(itemsInLot).multiply(current_price).done();
-          const lotsToBuy = math.chain(moneyFromPercent).divide(priceForLot).round().done();
+          const lotsToTrade = math.chain(moneyFromPercent).divide(priceForLot).round().done();
           return {
-            quantity_lots: lotsToBuy,
-            quantity: math.chain(lotsToBuy).multiply(itemsInLot).done(),
+            quantity_lots: lotsToTrade,
+            quantity: math.chain(lotsToTrade).multiply(itemsInLot).done(),
           };
         };
 
@@ -168,11 +167,14 @@ const stateMachine: ITransition = {
               sourcePortfolioItem,
               targetPortfolioTotalPrice,
             );
-            orders.buy.push({
-              ...sourcePortfolioItem,
-              quantity_lots,
-              quantity,
-          })
+            if (quantity_lots) {
+              orders.buy.push({
+                ...sourcePortfolioItem,
+                quantity_lots,
+                quantity,
+              });
+            }
+
           // need to sell some cuz we have more percent in targetPortfolio
           } else if (sourcePortfolioItem.percent < targetPortfolioItem.percent) {
             const {quantity, quantity_lots} = calculateQuantityLotsFromPercent(
@@ -180,13 +182,15 @@ const stateMachine: ITransition = {
               sourcePortfolioItem,
               targetPortfolioTotalPrice,
             );
-            orders.sell.push({
-              ...sourcePortfolioItem,
-              quantity_lots,
-              quantity,
-            })
-
+            if (quantity_lots) {
+              orders.sell.push({
+                ...sourcePortfolioItem,
+                quantity_lots,
+                quantity,
+              });
+            }
           }
+
           delete targetPortfolioProportions[key];
         });
 
@@ -197,7 +201,7 @@ const stateMachine: ITransition = {
           }
           orders.sell.push(item);
         });
-        
+
         if (orders.buy.length || orders.sell.length) {
           this.changeState('trade');
           this.dispatch('fulfillTrades', pair, api, userId, orders);
@@ -207,15 +211,26 @@ const stateMachine: ITransition = {
     trade: {
       fulfillTrades(pair: IPair, api: TradeAPI, userId: IUserId, orders: {buy: IProportion[], sell: IProportion[]}) {
         const mapFn = (apiTradeFn: Function) => {
-          return async ({quantity, figi}) => (
-            apiTradeFn(pair, quantity, undefined, figi, pair.targetPortfolioId).catch(e => logger.log({
-              level: "error",
-              error: e,
-              api: pair.apiName,
-              strategy: 'followPortfolio',
-          })))
+          return async ({quantity_lots, figi}) => (
+            apiTradeFn(pair, quantity_lots, undefined, figi, pair.targetPortfolioId)
+              .catch(e => logger.log({
+                level: "error",
+                error: e,
+                api: pair.apiName,
+                strategy: 'followPortfolio',
+                message: JSON.stringify({quantity_lots, figi}),
+            })
+            .then(order => {
+              logger.log({
+                message: JSON.stringify(order, null, 2),
+                api: pair.apiName,
+                strategy: 'followPortfolio', 
+                level: 'info',
+              })
+              return order;
+            })
+          ))
         };
-
         Promise.all(
           orders
           .sell

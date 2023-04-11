@@ -211,7 +211,7 @@ const createProductionCtx = (api): IContext => ({
   makeOrder: async (params) => {
     try {
       const orderParams = prepareOrderParams(params);
-      const order = await api.Sandbox.PostOrder(orderParams)
+      const order = await api.Orders.PostOrder(orderParams)
       saveOrderToCache({
         ...order,
         time: Date.now()
