@@ -64,7 +64,7 @@ class Binance extends TradeAPI {
 
   public async getMinLotSize(pair: IPair) {
     const exchangeInfo = await this.getExchangeInfo(pair);
-    const lotSize =  exchangeInfo.filters.find(({filterType}) => filterType === "MIN_NOTIONAL").minNotional;
+    const lotSize =  exchangeInfo.filters.find(({filterType}) => filterType === "NOTIONAL")?.minNotional || 0;
     const multiplicator = pair.minLotQuantity || 1.5;
     return Number(lotSize) * multiplicator;
   }
