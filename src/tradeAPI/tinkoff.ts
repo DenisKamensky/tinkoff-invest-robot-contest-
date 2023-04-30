@@ -465,6 +465,7 @@ class TinkoffApi extends TradeAPI {
       make: ticker,
       apiName: TradeAPIs.TINKOFF,
       strategyName: IStrategyNames.DCA,
+      execTime: "* * * * * *",
     }
     const {interval: candleInterval} = this.calculateCandelIntervalConfig({
       ...defaultParams,

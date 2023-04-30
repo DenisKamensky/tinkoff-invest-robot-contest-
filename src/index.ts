@@ -3,13 +3,10 @@ dotenv.config();
 
 import * as fs from "fs";
 import path from "path";
-import {promisify} from "util";
 import * as winston from "winston";
+import {CronJob} from "cron";
 
-import IPair from "./entities/pair";
 import ITradeConfigItem from "./entities/tradeConfig";
-import {convertTime, TRANSFORM_MEASURES} from "./utils";
-
 import TradeAPIs from "./entities/tradeAPIs";
 import AlpacaAPI from "./tradeAPI/alpaca";
 import TradeAPI from "./tradeAPI/baseApi";
@@ -19,6 +16,7 @@ import StateMachine, { ITransition } from "./utils/stateMachine";
 import DcaStrategy from "./strategies/DCA";
 import FollowPortfolioStrategy from "./strategies/followPortfolio";
 import { IStrategyNames } from "./entities/strategyNames";
+import IPair from "./entities/pair";
 
 
 const logger = winston.createLogger({
@@ -51,7 +49,6 @@ const apis: {[key: string]: TradeAPI} = {
   [TradeAPIs.TINKOFF]: new TinkoffApi(),
 };
 
-const readFile = promisify(fs.readFile);
 const configFileName = "trade-config.json";
 const PATH_TO_CONFIG = path.resolve(configFileName);
 const initialConfig = JSON.parse(fs.readFileSync(PATH_TO_CONFIG, "utf-8"));
@@ -61,23 +58,10 @@ const strategiesDictionary: Record<IStrategyNames, ITransition> = {
   [IStrategyNames.DCA]: DcaStrategy,
   [IStrategyNames.FOLLOW_PORTFOLIO]: FollowPortfolioStrategy,
 };
+const tasks = [];
 
-/*
-* update config on Changes
-*/
-fs.watch(path.resolve(), (eventType, filename) => {
-  if (filename !== configFileName || eventType !== "change") {
-    return;
-  }
-  readFile(PATH_TO_CONFIG, "utf-8")
-    .then((content) => {
-      tradeConfig = JSON.parse(content);
-    });
-});
-
-setInterval(() => {
-  tradeConfig.forEach((user) => {
-    const userAPIS = Object.keys(user.APIs)
+tradeConfig.forEach(user => {
+  const userAPIS = Object.keys(user.APIs)
       .reduce((apiList, currentApiName) => {
         const api = apis[currentApiName];
         if (!api) {
@@ -92,25 +76,42 @@ setInterval(() => {
         apiList[currentApiName] = api;
         return apiList;
       }, {});
-    user.pairs.forEach((pair: IPair) => {
-      const api = userAPIS[pair.apiName];
-      if (!api) {
-        logger.log({
-          level: "error",
-          message: `${pair.apiName} - api not found`,
-        });
-        return;
-      }
-      const strategy = strategiesDictionary[pair.strategyName];
-      if (!strategy) {
-        logger.log({
-          level: "error",
-          message: `${pair.strategyName} - strategy not found`,
-        });
-        return;
-      }
-      const machine = new StateMachine(strategy, "init");
-      machine.dispatch("exec", pair, api, user.id);
-    });
-  });
-}, convertTime(1, TRANSFORM_MEASURES.MINUTES, TRANSFORM_MEASURES.MILLISECONDS));
+
+      user.pairs.forEach((pair: IPair) => {
+        const api = userAPIS[pair.apiName];
+        if (!api) {
+          logger.log({
+            level: "error",
+            message: `${pair.apiName} - api not found`,
+          });
+          return;
+        }
+        const strategy = strategiesDictionary[pair.strategyName];
+        if (!strategy) {
+          logger.log({
+            level: "error",
+            message: `${pair.strategyName} - strategy not found`,
+          });
+          return;
+        }
+        if (!pair.execTime) {
+          logger.log({
+            level: "error",
+            message: `${JSON.stringify(pair, null, 2)} - exec time is not valid`,
+          })
+          return;
+        }
+
+        const job = new CronJob(
+          pair.execTime,
+          () => {
+            const machine = new StateMachine(strategy, "init");
+            machine.dispatch("exec", pair, api, user.id);
+          }
+        );
+
+        tasks.push(job);
+      });
+});
+
+tasks.forEach(task => task.start());

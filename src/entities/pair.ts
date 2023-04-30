@@ -25,6 +25,7 @@ interface IFollowPortfolioPair {
 interface ICommonPair {
   apiName: TradeAPIs;
   strategyName: IStrategyNames;
+  execTime: string; // scheduling time in cron syntax
 }
 
 type IPair = ICommonPair & IFollowPortfolioPair & ICryptoPair;
