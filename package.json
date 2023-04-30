@@ -18,6 +18,7 @@
   "license": "ISC",
   "dependencies": {
     "@grpc/grpc-js": "^1.6.7",
+    "cron": "^2.3.0",
     "data-forge": "^1.9.5",
     "dotenv": "8.2.0",
     "fast-copy": "^2.1.3",

@@ -14,6 +14,7 @@ const pair: IPair =  {
   minLotQuantity: 2,
   quantityFormater: "(val) => val * 2",
   take: "BNB",
+  execTime: "* * * * * *",
 };
 
 export default pair;
