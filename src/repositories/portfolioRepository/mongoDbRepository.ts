@@ -3,7 +3,7 @@ import PortfolioModel from '../../db/mongodb/models/portfolio';
 import connectToDbPromise, {getdbStatus} from '../../db/mongodb';
 import { IPortfolioRepository } from ".";
 import IPortfolio, { IRawPortfolio } from '../../entities/portfolio';
-
+declare var logger;
 class MongoDbPortfolioRepository implements IPortfolioRepository {
     private readonly _portfolioModel = PortfolioModel;
 
@@ -25,10 +25,21 @@ class MongoDbPortfolioRepository implements IPortfolioRepository {
 
     async savePortfolio(id: IPortfolio["id"], portfolio: IRawPortfolio) {
         await this.connectToDb();
-        this._portfolioModel.create({
-            ...portfolio,
-            _id: id,
-        })
+        const currentPortfolio = await this.getPortfolio(id);
+        if (!currentPortfolio) {
+            return this._portfolioModel.create({
+                ...portfolio,
+                _id: id,
+            }).catch(e => {
+                logger.log({
+                    level: 'error',
+                    error: e,
+                    place: 'portfolio repository mongodb'
+                })
+            })
+        }
+        currentPortfolio.positions = portfolio.positions;
+        return currentPortfolio.save()
     };
 }
 
