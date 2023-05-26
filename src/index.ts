@@ -23,7 +23,7 @@ const logger = winston.createLogger({
   defaultMeta: {},
   format: winston.format.combine(
     winston.format.timestamp(),
-    winston.format.prettyPrint(),
+    winston.format.json(),
   ),
   level: "info",
   transports: [

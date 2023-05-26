@@ -56,7 +56,8 @@ const stateMachine: ITransition = {
       async detectChangesInPortfolio(pair: IPair, api: TradeAPI, userId: IUserId, portfolio: IRawPortfolio) {
         let portfolioSnapshot;
         try {
-          portfolioSnapshot = await db.getPortfolio(pair.sourcePortfolioId);
+          portfolioSnapshot = await db.getPortfolio(pair.sourcePortfolioId)
+            .then(snapshot => snapshot || {id: pair.sourcePortfolioId, positions: []});
         } catch(e) {
           logger.log({
             level: "error",
@@ -64,11 +65,10 @@ const stateMachine: ITransition = {
             api: pair.apiName,
             strategy: 'followPortfolio',
           });
-          return;
         }
-        
+
         if (!portfolioSnapshot) {
-          portfolioSnapshot = {id: pair.sourcePortfolioId, positions: []}
+          return;
         }
 
         // store snapshot in hashTable to reduce loop cycles
