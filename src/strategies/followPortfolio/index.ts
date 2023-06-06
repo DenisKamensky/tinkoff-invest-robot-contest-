@@ -101,8 +101,16 @@ const stateMachine: ITransition = {
         if (!Object.keys(changedPositions).length) {
           return;
         }
+        logger.log({
+          level: "info",
+          api: pair.apiName,
+          strategy: 'followPortfolio',
+          changedPositions,
+          newPortfolio: portfolio,
+          dbPortfolio: portfolioSnapshot,
+        });
         await db.savePortfolio(pair.sourcePortfolioId, portfolio);
-        this.dispatch("calculatePortfolioProportions", pair, api, userId, {portfolio, totalPortfolioPrice: commonPortfolioPrice})
+        this.dispatch("calculatePortfolioProportions", pair, api, userId, {portfolio, totalPortfolioPrice: commonPortfolioPrice});
       },
     
       async calculatePortfolioProportions(pair: IPair, api: TradeAPI, userId: IUserId, {portfolio, totalPortfolioPrice}: {portfolio: IPortfolio, totalPortfolioPrice: number}) {
