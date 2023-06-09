@@ -54,6 +54,10 @@ const stateMachine: ITransition = {
     },
     analyzePortfolio: {
       async detectChangesInPortfolio(pair: IPair, api: TradeAPI, userId: IUserId, portfolio: IRawPortfolio) {
+        // from time to time TINKOFF sends empty portfolio
+        if (!portfolio.positions.length) {
+          return;
+        }
         let portfolioSnapshot;
         try {
           portfolioSnapshot = await db.getPortfolio(pair.sourcePortfolioId)
