@@ -8,13 +8,12 @@ class Queue {
         const listItem = new LinkedList(data);
         if (!this.head) {
             this.head = listItem;
-        } 
-        const prevlistItem = this.tail;
-        if (prevlistItem) {
-            prevlistItem.next = listItem;
-            listItem.prev = prevlistItem;
+            this.tail = listItem;
+        } else {
+            listItem.prev = this.tail;
+            this.tail.next = listItem;
+            this.tail = listItem;
         }
-        this.tail = listItem;
         this._size++;
     }
 

@@ -55,19 +55,19 @@ const stateMachine: ITransition = {
                 return;
             }
             
-            const closestCheapOrder = orders.find(order => {
+            const cheaperOrders = orders.filter(order => {
                 const price = Number(order.price);
                 if (!isNaN(price)) {
                     return (price + (pair.offset || 0)) < currentPrice;
                 }
             });
             this.changeState("trade");
-            if (closestCheapOrder) {
-                this.dispatch("sell", pair, api, userId, closestCheapOrder, currentPrice);
+            if (cheaperOrders.length) {
+                this.dispatch("sell", pair, api, userId, cheaperOrders, currentPrice);
             } else {
-                const cheapestOrder = orders[orders.length - 1];
-                const cheapestOrderPrice = Number(cheapestOrder.price);
-                if (!isNaN(cheapestOrderPrice) && cheapestOrderPrice - (pair.offset || 0) > currentPrice) {
+                const expensiveOrder = orders[orders.length - 1];
+                const expensiveOrdePrice = Number(expensiveOrder.price);
+                if (!isNaN(expensiveOrdePrice) && expensiveOrdePrice - (pair.offset || 0) > currentPrice) {
                     this.dispatch("buy", pair, api, userId, currentPrice);
                 }
             }
@@ -112,34 +112,48 @@ const stateMachine: ITransition = {
                 });
             }
         },
-        async sell(pair: IPair, api: TradeAPI, userId: IUserId, order: IOrder, price: number) {
-            try {
-                const transformQuantity = getConfigQuantityFormaters(pair);
-                const orderQuantity = transformQuantity(Number(order.quantity || order.origQty));
-                const initialBalance = await api.getPairBalance(pair);
-                if (initialBalance[pair.make] < orderQuantity) {
-                    if (!api.SUPPORT_SAVINGS) return;
-                    await api.redeemSaving(pair, orderQuantity);
-                };
-                const sellOrder = await api.sell(pair, orderQuantity, price);
-                const balance = await api.getPairBalance(pair);
-                loggerLog({
-                    balance,
-                    level: "info",
-                    message: "created sell order",
-                    order: sellOrder,
-                    api: pair.apiName,
-                  });
-                //@TODO: fix after all date will be created according to the common interface
-                db.deleteOrder(String(order.id || order.orderId));
-            } catch(error) {
-                loggerLog({
-                    level: "error",
-                    error,
-                    api: pair.apiName,
-                });
+        async sell(pair: IPair, api: TradeAPI, userId: IUserId, orders: IOrder[], price: number) {
+            const sellOrder = async (order: IOrder) => {
+                try {
+                    const transformQuantity = getConfigQuantityFormaters(pair);
+                    const orderQuantity = transformQuantity(Number(order.quantity || order.origQty));
+                    const initialBalance = await api.getPairBalance(pair);
+                    if (initialBalance[pair.make] < orderQuantity) {
+                        if (!api.SUPPORT_SAVINGS) return;
+                        await api.redeemSaving(pair, orderQuantity);
+                    };
+                    const sellOrder = await api.sell(pair, orderQuantity, price);
+                    const balance = await api.getPairBalance(pair);
+                    loggerLog({
+                        balance,
+                        level: "info",
+                        message: "created sell order",
+                        order: sellOrder,
+                        api: pair.apiName,
+                    });
+                    //@TODO: fix after all date will be created according to the common interface
+                    db.deleteOrder(String(order.id || order.orderId));
+                } catch(error) {
+                    loggerLog({
+                        level: "error",
+                        error,
+                        api: pair.apiName,
+                    });
+                }
             }
 
+            let currentOrderIndex = 0;
+            const makeOrder = async (orderIndex: number) => {
+                const order = orders[orderIndex];
+                if (!order) {
+                    return;
+                }
+                await sellOrder(order);
+                currentOrderIndex++;
+                return makeOrder(currentOrderIndex);
+            };
+
+            makeOrder(currentOrderIndex);
         }
     }
 }
